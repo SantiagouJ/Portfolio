@@ -108,6 +108,46 @@ input {
   height: 100%;
 }
 
+html.is-pixel-reveal,
+html.is-pixel-reveal body {
+  overflow: hidden;
+}
+
+html.reduce-motion .pixel-reveal {
+  display: none;
+}
+
+.pixel-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.pixel-reveal-fallback,
+.pixel-reveal canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pixel-reveal-fallback {
+  background: #000;
+}
+
+html[data-mode="dev"] .pixel-reveal-fallback {
+  background: #fff;
+}
+
+.pixel-reveal.is-ready .pixel-reveal-fallback {
+  visibility: hidden;
+}
+
+.pixel-reveal canvas {
+  display: block;
+}
+
 .page {
   position: relative;
   z-index: 1;

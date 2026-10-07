@@ -31,7 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" data-mode="design" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
       <body>
         <Script id="mode-boot" strategy="beforeInteractive">
-          {`try{var m=localStorage.getItem("dm-mode");if(m==="dev"||m==="design")document.documentElement.setAttribute("data-mode",m);}catch(e){}`}
+          {`try{var m=localStorage.getItem("dm-mode");if(m==="dev"||m==="design")document.documentElement.setAttribute("data-mode",m);if(window.matchMedia("(prefers-reduced-motion: reduce)").matches){document.documentElement.classList.add("reduce-motion");}else{document.documentElement.classList.add("is-pixel-reveal");}}catch(e){}`}
         </Script>
         {children}
       </body>

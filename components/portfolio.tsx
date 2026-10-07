@@ -10,6 +10,7 @@ import Lenis from "lenis";
 import "lenis/dist/lenis.css";
 import { marquee, projects, site, type Mode } from "@/lib/content";
 import { runtime } from "@/lib/runtime";
+import { PixelReveal } from "@/components/pixel-reveal";
 
 const WebGLField = dynamic(
   () => import("@/components/webgl-field").then((mod) => mod.WebGLField),
@@ -137,7 +138,13 @@ export function Portfolio() {
       let tick: ((time: number) => void) | null = null;
       const onNativeScroll = () => readScroll(window.scrollY);
 
+      let onRevealDone: (() => void) | null = null;
       if (lenis) {
+        if (document.documentElement.classList.contains("is-pixel-reveal")) {
+          lenis.stop();
+          onRevealDone = () => lenis.start();
+          window.addEventListener("pixel-reveal-done", onRevealDone, { once: true });
+        }
         lenis.on("scroll", (instance) => {
           runtime.scroll = instance.progress;
           header?.classList.toggle("is-scrolled", instance.scroll > 8);
@@ -255,6 +262,7 @@ export function Portfolio() {
       document.fonts.ready.then(refresh);
 
       return () => {
+        if (onRevealDone) window.removeEventListener("pixel-reveal-done", onRevealDone);
         links.forEach((link) => link.removeEventListener("click", onClick));
         cues.forEach((cue) => cue.removeEventListener("click", onCue));
         window.removeEventListener("scroll", onNativeScroll);
@@ -271,6 +279,7 @@ export function Portfolio() {
 
   return (
     <div ref={root}>
+      <PixelReveal />
       <a className="skip" href="#work">
         Skip to work
       </a>

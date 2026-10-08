@@ -8,7 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
-import { marquee, projects, site, type Mode } from "@/lib/content";
+import { marquee, site, work, type Mode } from "@/lib/content";
 import { runtime } from "@/lib/runtime";
 import { PixelReveal } from "@/components/pixel-reveal";
 
@@ -27,9 +27,13 @@ const theme: Record<Mode, string> = {
 export function Portfolio() {
   const root = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLFieldSetElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const switching = useRef(false);
   const [mode, setMode] = useState<Mode>("design");
+  const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
     const stored = document.documentElement.dataset.mode;
@@ -39,6 +43,12 @@ export function Portfolio() {
       meta?.setAttribute("content", theme[stored]);
     }
   }, []);
+
+  useEffect(() => {
+    const refresh = window.setTimeout(() => ScrollTrigger.refresh(), 520);
+    ScrollTrigger.refresh();
+    return () => window.clearTimeout(refresh);
+  }, [openId]);
 
   const choose = (next: Mode) => {
     if (document.documentElement.dataset.mode === next || switching.current) return;
@@ -58,6 +68,7 @@ export function Portfolio() {
       document.documentElement.dataset.mode = next;
       localStorage.setItem("dm-mode", next);
       setMode(next);
+      setOpenId(null);
       document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme[next]);
       runtime.setMode(next === "dev" ? 1 : 0);
       window.dispatchEvent(new CustomEvent("dm-mode", { detail: next }));
@@ -189,7 +200,7 @@ export function Portfolio() {
         if (!id) return;
         const target = document.querySelector(id);
         if (!target) return;
-        scrollTo(target);
+        scrollTo(target as HTMLElement);
       };
       cues.forEach((cue) => cue.addEventListener("click", onCue));
 
@@ -269,6 +280,156 @@ export function Portfolio() {
         if (tick) gsap.ticker.remove(tick);
         lenis?.destroy();
       };
+    },
+    { scope: root },
+  );
+
+  useGSAP(
+    () => {
+      const preview = previewRef.current;
+      const frame = frameRef.current;
+      const image = imageRef.current;
+      const list = root.current?.querySelector(".work-list");
+      if (!preview || !frame || !image || !list) return;
+
+      const mm = gsap.matchMedia();
+      mm.add("(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)", () => {
+        const xSet = gsap.quickSetter(preview, "x", "px");
+        const ySet = gsap.quickSetter(preview, "y", "px");
+        let current: HTMLElement | null = null;
+        let open = false;
+
+        const hide = () => {
+          if (!open) return;
+          open = false;
+          current = null;
+          gsap.killTweensOf(frame);
+          gsap.to(frame, {
+            autoAlpha: 0,
+            scale: 0.92,
+            duration: 0.16,
+            ease: "power2.out",
+          });
+        };
+
+        const show = (row: HTMLElement, event: PointerEvent) => {
+          const src = row.dataset.image;
+          if (!src) return;
+          if (image.getAttribute("src") !== src) image.src = src;
+          xSet(event.clientX);
+          ySet(event.clientY);
+          if (row === current && open) return;
+          current = row;
+          if (open) return;
+          open = true;
+          gsap.killTweensOf(frame);
+          gsap.fromTo(
+            frame,
+            { autoAlpha: 0, scale: 0.86 },
+            { autoAlpha: 1, scale: 1, duration: 0.26, ease: "power3.out" },
+          );
+        };
+
+        let hot: HTMLElement | null = null;
+
+        const barOf = (row: HTMLElement) => row.querySelector<HTMLElement>(".work-row-bg");
+
+        const enteredFromTop = (row: HTMLElement, y: number) => {
+          const rect = row.getBoundingClientRect();
+          return y < rect.top + rect.height / 2;
+        };
+
+        const slideBar = (row: HTMLElement, y: number, enter: boolean) => {
+          const bar = barOf(row);
+          if (!bar) return;
+          const parked = enteredFromTop(row, y) ? "-100%" : "100%";
+          if (enter) {
+            gsap.fromTo(
+              bar,
+              { top: parked },
+              { top: "0%", duration: 0.2, ease: "power1.out", overwrite: true },
+            );
+            return;
+          }
+          gsap.to(bar, { top: parked, duration: 0.2, ease: "power1.out", overwrite: true });
+        };
+
+        const resetBars = () => {
+          gsap.utils.toArray<HTMLElement>(".work-row-bg", list).forEach((bar) => {
+            gsap.killTweensOf(bar);
+            gsap.set(bar, { top: "-100%" });
+          });
+        };
+
+        const arm = (row: HTMLElement, y: number) => {
+          if (row === hot) return;
+          if (hot) {
+            hot.classList.remove("is-hot");
+            slideBar(hot, y, false);
+          }
+          row.classList.add("is-hot");
+          slideBar(row, y, true);
+          hot = row;
+        };
+
+        const disarm = (y: number) => {
+          if (!hot) return;
+          hot.classList.remove("is-hot");
+          slideBar(hot, y, false);
+          hot = null;
+        };
+
+        const sync = (event: PointerEvent) => {
+          const target = event.target;
+          if (!(target instanceof Element)) {
+            hide();
+            disarm(event.clientY);
+            return;
+          }
+          const row = target.closest(".work-row");
+          if (!(row instanceof HTMLElement)) {
+            hide();
+            disarm(event.clientY);
+            return;
+          }
+          const set = row.closest(".work-set");
+          if (!(set instanceof HTMLElement) || set.dataset.set !== document.documentElement.dataset.mode) {
+            hide();
+            disarm(event.clientY);
+            return;
+          }
+          arm(row, event.clientY);
+          if (row !== current) show(row, event);
+          else {
+            xSet(event.clientX);
+            ySet(event.clientY);
+          }
+        };
+
+        const onLeave = (event: PointerEvent) => {
+          hide();
+          disarm(event.clientY);
+        };
+
+        const onMode = () => {
+          hide();
+          if (hot) hot.classList.remove("is-hot");
+          hot = null;
+          resetBars();
+        };
+
+        list.addEventListener("pointermove", sync);
+        list.addEventListener("pointerleave", onLeave);
+        window.addEventListener("dm-mode", onMode);
+
+        return () => {
+          list.removeEventListener("pointermove", sync);
+          list.removeEventListener("pointerleave", onLeave);
+          window.removeEventListener("dm-mode", onMode);
+        };
+      });
+
+      return () => mm.revert();
     },
     { scope: root },
   );
@@ -394,23 +555,73 @@ export function Portfolio() {
               Work
             </h2>
             <div className="work-list">
-              {projects.map((project) => (
-                <article className="work-row" key={project.index}>
-                  <span className="work-index">{project.index}</span>
-                  <div>
-                    <h3 className="work-title">{project.title}</h3>
-                    <p className="work-meta swap">
-                      <span className="only-dev" aria-hidden={mode !== "dev"}>
-                        {project.dev}
-                      </span>
-                      <span className="only-design" aria-hidden={mode !== "design"}>
-                        {project.design}
-                      </span>
-                    </p>
+              <div className="work-sets">
+                {(Object.keys(work) as Mode[]).map((set) => (
+                  <div
+                    className="work-set"
+                    data-set={set}
+                    key={set}
+                    aria-hidden={mode !== set}
+                  >
+                    {work[set].map((project) => {
+                      const id = `${set}-${project.title}`;
+                      const panelId = `work-panel-${set}-${project.index}`;
+                      const open = openId === id;
+                      return (
+                        <article className={`work-item${open ? " is-open" : ""}`} key={project.title}>
+                          <button
+                            className="work-row"
+                            type="button"
+                            data-image={project.image}
+                            aria-expanded={open}
+                            aria-controls={panelId}
+                            onClick={() => setOpenId((current) => (current === id ? null : id))}
+                          >
+                            <span className="work-row-bg" aria-hidden="true" />
+                            <span className="work-index">{project.index}</span>
+                            <span className="work-lead">
+                              <span className="work-title">{project.title}</span>
+                              <span className="work-meta">{project.meta}</span>
+                            </span>
+                            <span className="work-year">{project.year}</span>
+                          </button>
+                          <div
+                            className="work-panel"
+                            id={panelId}
+                            role="region"
+                            aria-label={project.title}
+                            aria-hidden={!open}
+                            inert={!open}
+                          >
+                            <div className="work-panel-clip">
+                              <div className="work-detail">
+                                <div>
+                                  <p className="work-copy">{project.detail}</p>
+                                  <a
+                                    className="work-visit"
+                                    href={project.visit}
+                                    onClick={(event) => {
+                                      if (project.visit === "#") event.preventDefault();
+                                    }}
+                                  >
+                                    Visit
+                                  </a>
+                                </div>
+                                <img className="work-shot" src={project.image} alt="" />
+                              </div>
+                            </div>
+                          </div>
+                        </article>
+                      );
+                    })}
                   </div>
-                  <span className="work-year">{project.year}</span>
-                </article>
-              ))}
+                ))}
+              </div>
+            </div>
+            <div className="work-preview" ref={previewRef} aria-hidden="true">
+              <div className="work-preview-frame" ref={frameRef}>
+                <img ref={imageRef} alt="" draggable={false} />
+              </div>
             </div>
           </section>
 
@@ -427,6 +638,13 @@ export function Portfolio() {
 
           <footer className="footer gutter">
             <span>© {new Date().getFullYear()} {site.name}</span>
+            <nav className="footer-links" aria-label="Social">
+              {site.socials.map((social) => (
+                <a key={social.label} href={social.href} target="_blank" rel="noreferrer">
+                  {social.label}
+                </a>
+              ))}
+            </nav>
             <span>Development and design</span>
           </footer>
         </main>

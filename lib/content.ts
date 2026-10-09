@@ -38,6 +38,11 @@ export const site = {
   ],
 };
 
+export const sections = [
+  { index: "01", label: "Work", href: "#work" },
+  { index: "02", label: "Contact", href: "#contact" },
+] as const;
+
 export const work: Record<Mode, readonly Project[]> = {
   design: [
     {

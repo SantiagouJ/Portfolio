@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type Ref } from "react";
 import { flushSync } from "react-dom";
 import dynamic from "next/dynamic";
 import gsap from "gsap";
@@ -8,7 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import Lenis from "lenis";
 import "lenis/dist/lenis.css";
-import { marquee, site, work, type Mode } from "@/lib/content";
+import { marquee, sections, site, work, type Mode } from "@/lib/content";
 import { runtime } from "@/lib/runtime";
 import { PixelReveal } from "@/components/pixel-reveal";
 
@@ -24,16 +24,80 @@ const theme: Record<Mode, string> = {
   dev: "#121210",
 };
 
+const menuHalf = Array.from({ length: 3 }, () => sections).flat();
+
+function ModeToggle({
+  mode,
+  idPrefix,
+  fieldRef,
+  onPointer,
+  onChoose,
+}: {
+  mode: Mode;
+  idPrefix: string;
+  fieldRef?: Ref<HTMLFieldSetElement>;
+  onPointer: (point: { x: number; y: number }) => void;
+  onChoose: (next: Mode) => void;
+}) {
+  return (
+    <fieldset
+      ref={fieldRef}
+      className="toggle"
+      onPointerDown={(event) => onPointer({ x: event.clientX, y: event.clientY })}
+      onClick={(event) => {
+        const label = (event.target as HTMLElement).closest("label");
+        if (!label) return;
+        const next: Mode = label.htmlFor.endsWith("-dev") ? "dev" : "design";
+        onPointer({ x: event.clientX, y: event.clientY });
+        onChoose(next);
+      }}
+    >
+      <legend className="sr-only">Interface</legend>
+      <span className="toggle-thumb" aria-hidden="true" />
+      <input
+        id={`${idPrefix}-dev`}
+        type="radio"
+        name={idPrefix}
+        value="dev"
+        checked={mode === "dev"}
+        onChange={() => onChoose("dev")}
+      />
+      <label htmlFor={`${idPrefix}-dev`}>Development</label>
+      <input
+        id={`${idPrefix}-design`}
+        type="radio"
+        name={idPrefix}
+        value="design"
+        checked={mode === "design"}
+        onChange={() => onChoose("design")}
+      />
+      <label htmlFor={`${idPrefix}-design`}>Design</label>
+    </fieldset>
+  );
+}
+
 export function Portfolio() {
   const root = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLFieldSetElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
+  const contactRef = useRef<HTMLElement>(null);
+  const contactTrailRef = useRef<HTMLCanvasElement>(null);
+  const overlayRef = useRef<HTMLElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const switching = useRef(false);
+  const menuOpenRef = useRef(false);
+  const menuActions = useRef({
+    open: () => {},
+    close: (_href?: string | null) => {},
+  });
+  const menuDrag = useRef(false);
   const [mode, setMode] = useState<Mode>("design");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const stored = document.documentElement.dataset.mode;
@@ -49,6 +113,134 @@ export function Portfolio() {
     ScrollTrigger.refresh();
     return () => window.clearTimeout(refresh);
   }, [openId]);
+
+  useEffect(() => {
+    const section = contactRef.current;
+    const canvas = contactTrailRef.current;
+    const context = canvas?.getContext("2d");
+    if (!section || !canvas || !context) return;
+
+    const query = window.matchMedia(
+      "(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)",
+    );
+    type Pixel = {
+      x: number;
+      y: number;
+      size: number;
+      born: number;
+      duration: number;
+      opacity: number;
+    };
+
+    let pixels: Pixel[] = [];
+    let frame = 0;
+    let lastPoint: { x: number; y: number } | null = null;
+    let removeInteraction = () => {};
+
+    const resize = () => {
+      const rect = section.getBoundingClientRect();
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.max(1, Math.round(rect.width * ratio));
+      canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    };
+
+    const draw = (time: number) => {
+      const width = canvas.width / Math.min(window.devicePixelRatio || 1, 2);
+      const height = canvas.height / Math.min(window.devicePixelRatio || 1, 2);
+      context.clearRect(0, 0, width, height);
+      pixels = pixels.filter((pixel) => time - pixel.born < pixel.duration);
+
+      pixels.forEach((pixel) => {
+        const progress = (time - pixel.born) / pixel.duration;
+        context.globalAlpha = Math.max(0, 1 - progress) * pixel.opacity;
+        context.fillStyle = "#ffffff";
+        context.fillRect(
+          Math.round(pixel.x - pixel.size / 2),
+          Math.round(pixel.y - pixel.size / 2),
+          Math.round(pixel.size),
+          Math.round(pixel.size),
+        );
+      });
+      context.globalAlpha = 1;
+
+      if (pixels.length > 0) frame = requestAnimationFrame(draw);
+      else frame = 0;
+    };
+
+    const addPixel = (x: number, y: number, time: number) => {
+      const size = 70;
+      pixels.push({
+        x: Math.round(x / size) * size,
+        y: Math.round(y / size) * size,
+        size,
+        born: time,
+        duration: 620 + Math.random() * 320,
+        opacity: 0.42 + Math.random() * 0.24,
+      });
+      if (pixels.length > 120) pixels.splice(0, pixels.length - 120);
+      if (!frame) frame = requestAnimationFrame(draw);
+    };
+
+    const setupInteraction = () => {
+      removeInteraction();
+      if (!query.matches) {
+        pixels = [];
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
+
+      const onMove = (event: PointerEvent) => {
+        const rect = section.getBoundingClientRect();
+        const point = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+        const time = performance.now();
+
+        if (!lastPoint) {
+          addPixel(point.x, point.y, time);
+          lastPoint = point;
+          return;
+        }
+
+        const dx = point.x - lastPoint.x;
+        const dy = point.y - lastPoint.y;
+        const distance = Math.hypot(dx, dy);
+        const steps = Math.max(1, Math.floor(distance / 18));
+        for (let step = 1; step <= steps; step += 1) {
+          const progress = step / steps;
+          addPixel(
+            lastPoint.x + dx * progress,
+            lastPoint.y + dy * progress,
+            time - (steps - step) * 8,
+          );
+        }
+        lastPoint = point;
+      };
+
+      const onLeave = () => {
+        lastPoint = null;
+      };
+
+      section.addEventListener("pointermove", onMove);
+      section.addEventListener("pointerleave", onLeave);
+      removeInteraction = () => {
+        section.removeEventListener("pointermove", onMove);
+        section.removeEventListener("pointerleave", onLeave);
+      };
+    };
+
+    resize();
+    setupInteraction();
+    const observer = new ResizeObserver(resize);
+    observer.observe(section);
+    query.addEventListener("change", setupInteraction);
+
+    return () => {
+      removeInteraction();
+      observer.disconnect();
+      query.removeEventListener("change", setupInteraction);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
 
   const choose = (next: Mode) => {
     if (document.documentElement.dataset.mode === next || switching.current) return;
@@ -140,11 +332,53 @@ export function Portfolio() {
             syncTouch: false,
           });
 
+      const brand = header?.querySelector<HTMLElement>(".brand");
+      const navLinks = header?.querySelectorAll<HTMLElement>(".nav a") ?? [];
+      const toggleClip = header?.querySelector<HTMLElement>(".toggle-clip");
+      const menuBtn = header?.querySelector<HTMLElement>(".menu-toggle");
+      const desktopQuery = window.matchMedia("(min-width: 1080px)");
+      let compact = false;
+      let headTl: gsap.core.Timeline | null = null;
+
+      const layoutHead = () => {
+        headTl?.kill();
+        headTl = null;
+        const nodes = [brand, toggleClip, menuBtn, ...navLinks].filter(
+          (node): node is HTMLElement => node instanceof HTMLElement,
+        );
+        gsap.set(nodes, { clearProps: "all" });
+        compact = false;
+        header?.classList.remove("is-scrolled");
+        if (reduce || !desktopQuery.matches || !menuBtn || !toggleClip) return;
+        gsap.set(menuBtn, { autoAlpha: 0 });
+        headTl = gsap.timeline({ paused: true, defaults: { duration: 0.75, ease: "expo.out" } });
+        headTl
+          .to([brand, ...navLinks].filter((node): node is HTMLElement => node instanceof HTMLElement), {
+            yPercent: -110,
+            autoAlpha: 0,
+            pointerEvents: "none",
+            stagger: -0.035,
+          }, 0)
+          .to(menuBtn, { autoAlpha: 1, duration: 0.45 }, 0.2);
+      };
+
+      const setCompact = (scroll: number) => {
+        const on = scroll > 80;
+        if (on === compact && header?.classList.contains("is-scrolled") === on) return;
+        compact = on;
+        header?.classList.toggle("is-scrolled", on);
+        if (!headTl) return;
+        if (on) headTl.play();
+        else headTl.reverse();
+      };
+
       const readScroll = (scroll: number) => {
         const limit = document.documentElement.scrollHeight - window.innerHeight;
         runtime.scroll = limit > 0 ? scroll / limit : 0;
-        header?.classList.toggle("is-scrolled", scroll > 8);
+        setCompact(scroll);
       };
+
+      layoutHead();
 
       let tick: ((time: number) => void) | null = null;
       const onNativeScroll = () => readScroll(window.scrollY);
@@ -153,12 +387,14 @@ export function Portfolio() {
       if (lenis) {
         if (document.documentElement.classList.contains("is-pixel-reveal")) {
           lenis.stop();
-          onRevealDone = () => lenis.start();
+          onRevealDone = () => {
+            if (!menuOpenRef.current) lenis.start();
+          };
           window.addEventListener("pixel-reveal-done", onRevealDone, { once: true });
         }
         lenis.on("scroll", (instance) => {
           runtime.scroll = instance.progress;
-          header?.classList.toggle("is-scrolled", instance.scroll > 8);
+          setCompact(instance.scroll);
           ScrollTrigger.update();
         });
         tick = (time: number) => {
@@ -166,9 +402,15 @@ export function Portfolio() {
         };
         gsap.ticker.add(tick);
         gsap.ticker.lagSmoothing(0);
-      } else {
-        window.addEventListener("scroll", onNativeScroll, { passive: true });
       }
+      window.addEventListener("scroll", onNativeScroll, { passive: true });
+
+      const onDesktopChange = () => {
+        layoutHead();
+        readScroll(window.scrollY);
+      };
+      desktopQuery.addEventListener("change", onDesktopChange);
+      readScroll(lenis ? lenis.scroll : window.scrollY);
 
       const scrollTo = (target: HTMLElement | number) => {
         if (lenis) {
@@ -184,7 +426,9 @@ export function Portfolio() {
 
       const links = root.current?.querySelectorAll<HTMLAnchorElement>('a[href^="#"]') ?? [];
       const onClick = (event: Event) => {
-        const href = (event.currentTarget as HTMLAnchorElement).getAttribute("href");
+        const anchor = event.currentTarget as HTMLAnchorElement;
+        if (anchor.closest(".menu-overlay")) return;
+        const href = anchor.getAttribute("href");
         if (!href || href === "#") return;
         const target = href === "#top" ? 0 : document.querySelector(href);
         if (target === null) return;
@@ -193,6 +437,173 @@ export function Portfolio() {
         scrollTo(target);
       };
       links.forEach((link) => link.addEventListener("click", onClick));
+
+      const overlay = overlayRef.current;
+      const sheet = sheetRef.current;
+      const menuTrack = trackRef.current;
+      const closeBtn = overlay?.querySelector<HTMLButtonElement>(".menu-close");
+      const motion = { offset: 0 };
+      let menuTarget = 0;
+      let menuCurrent = 0;
+      let menuMax = 1;
+      let menuTl: gsap.core.Timeline | null = null;
+      let menuTicking = false;
+      let press: { y: number; moved: boolean } | null = null;
+      let restoreFocus: HTMLElement | null = null;
+      const ySet = menuTrack ? gsap.quickSetter(menuTrack, "y", "px") : null;
+
+      const measureMenu = () => {
+        menuMax = Math.max((menuTrack?.offsetHeight ?? 0) / 2, 1);
+      };
+
+      const paintMenu = () => {
+        if (!menuTrack || !ySet || menuMax <= 0) return;
+        const ease = reduce ? 1 : 0.14;
+        menuCurrent += (menuTarget - menuCurrent) * ease;
+        if (Math.abs(menuTarget - menuCurrent) < 0.2) menuCurrent = menuTarget;
+        ySet(-gsap.utils.wrap(0, menuMax, menuCurrent - motion.offset));
+        const mid = window.innerHeight * 0.5;
+        const rows = [...menuTrack.querySelectorAll<HTMLElement>(".menu-row")];
+        let nearest: HTMLElement | null = null;
+        let nearestDist = Infinity;
+        const measured = rows.map((row) => {
+          const box = row.getBoundingClientRect();
+          const dist = Math.abs(box.top + box.height * 0.5 - mid);
+          if (dist < nearestDist) {
+            nearestDist = dist;
+            nearest = row;
+          }
+          return { row, dist, height: box.height };
+        });
+        measured.forEach(({ row, dist, height }) => {
+          const steps = dist / Math.max(height, 1);
+          const focused = row === nearest || row.matches(":hover");
+          const opacity = focused ? 1 : Math.max(0.16, 1 - steps * 0.62);
+          row.style.opacity = opacity.toFixed(3);
+        });
+      };
+
+      const onMenuWheel = (event: WheelEvent) => {
+        event.preventDefault();
+        const line = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
+        menuTarget += event.deltaY * line;
+      };
+
+      const onMenuPointerDown = (event: PointerEvent) => {
+        if (event.button !== 0) return;
+        const target = event.target;
+        if (target instanceof Element && target.closest("button, fieldset, label, input")) return;
+        press = { y: event.clientY, moved: false };
+      };
+
+      const onMenuPointerMove = (event: PointerEvent) => {
+        if (!press) return;
+        const delta = press.y - event.clientY;
+        if (!press.moved && Math.abs(delta) < 5) return;
+        press.moved = true;
+        menuTarget += delta;
+        press.y = event.clientY;
+      };
+
+      const onMenuPointerUp = () => {
+        if (press?.moved) menuDrag.current = true;
+        press = null;
+      };
+
+      const onMenuKey = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeMenu();
+          return;
+        }
+        if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+        event.preventDefault();
+        const row = menuTrack?.querySelector<HTMLElement>(".menu-row");
+        const step = row?.offsetHeight ?? 140;
+        menuTarget += event.key === "ArrowDown" ? step : -step;
+      };
+
+      const unbindMenu = () => {
+        window.removeEventListener("keydown", onMenuKey);
+        sheet?.removeEventListener("wheel", onMenuWheel);
+        sheet?.removeEventListener("pointerdown", onMenuPointerDown);
+        window.removeEventListener("pointermove", onMenuPointerMove);
+        window.removeEventListener("pointerup", onMenuPointerUp);
+        window.removeEventListener("resize", measureMenu);
+        if (menuTicking) gsap.ticker.remove(paintMenu);
+        menuTicking = false;
+        press = null;
+      };
+
+      const closeMenu = (href?: string | null) => {
+        if (!menuOpenRef.current || !overlay || !sheet) return;
+        menuOpenRef.current = false;
+        setMenuOpen(false);
+        unbindMenu();
+        document.documentElement.classList.remove("is-menu-open");
+        if (!document.documentElement.classList.contains("is-pixel-reveal")) lenis?.start();
+        menuTl?.kill();
+        menuTl = gsap.timeline({
+          defaults: { duration: reduce ? 0.01 : 0.8, ease: "power3.inOut" },
+          onComplete: () => {
+            gsap.set(overlay, { autoAlpha: 0 });
+            overlay.inert = true;
+            if (restoreFocus && restoreFocus.getClientRects().length > 0) restoreFocus.focus();
+          },
+        });
+        if (reduce) {
+          menuTl.set(overlay, { autoAlpha: 0, yPercent: -100 }).set(sheet, { yPercent: 100 });
+        } else {
+          menuTl.to(overlay, { yPercent: -100 }, 0).to(sheet, { yPercent: 100 }, 0);
+        }
+        if (!href) return;
+        const destination = href === "#top" ? 0 : document.querySelector(href);
+        if (destination === null) return;
+        if (typeof destination !== "number" && !(destination instanceof HTMLElement)) return;
+        scrollTo(destination);
+      };
+
+      const openMenu = () => {
+        if (menuOpenRef.current || !overlay || !sheet || !menuTrack) return;
+        menuOpenRef.current = true;
+        setMenuOpen(true);
+        restoreFocus = document.activeElement instanceof HTMLElement ? document.activeElement : menuBtn ?? null;
+        document.documentElement.classList.add("is-menu-open");
+        lenis?.stop();
+        measureMenu();
+        menuTarget = 0;
+        menuCurrent = 0;
+        motion.offset = reduce ? 0 : window.innerHeight;
+        overlay.inert = false;
+        menuTl?.kill();
+        menuTl = gsap.timeline({ defaults: { duration: reduce ? 0.01 : 0.9, ease: "power4.out" } });
+        if (reduce) {
+          menuTl.set(overlay, { autoAlpha: 1, yPercent: 0 }).set(sheet, { yPercent: 0 });
+        } else {
+          menuTl
+            .set(overlay, { autoAlpha: 1 })
+            .fromTo(overlay, { yPercent: -100 }, { yPercent: 0 }, 0)
+            .fromTo(sheet, { yPercent: 100 }, { yPercent: 0 }, 0)
+            .to(motion, { offset: 0, duration: 1.4, ease: "expo.out" }, 0);
+        }
+        if (!menuTicking) {
+          menuTicking = true;
+          gsap.ticker.add(paintMenu);
+        }
+        window.addEventListener("keydown", onMenuKey);
+        sheet.addEventListener("wheel", onMenuWheel, { passive: false });
+        sheet.addEventListener("pointerdown", onMenuPointerDown);
+        window.addEventListener("pointermove", onMenuPointerMove);
+        window.addEventListener("pointerup", onMenuPointerUp);
+        window.addEventListener("resize", measureMenu);
+        requestAnimationFrame(() => closeBtn?.focus());
+      };
+
+      menuActions.current = { open: openMenu, close: closeMenu };
+      if (overlay && sheet) {
+        gsap.set(overlay, { autoAlpha: 0, yPercent: -100 });
+        gsap.set(sheet, { yPercent: 100 });
+      }
 
       const cues = root.current?.querySelectorAll<HTMLButtonElement>("[data-scroll]") ?? [];
       const onCue = (event: Event) => {
@@ -277,6 +688,11 @@ export function Portfolio() {
         links.forEach((link) => link.removeEventListener("click", onClick));
         cues.forEach((cue) => cue.removeEventListener("click", onCue));
         window.removeEventListener("scroll", onNativeScroll);
+        desktopQuery.removeEventListener("change", onDesktopChange);
+        unbindMenu();
+        menuTl?.kill();
+        document.documentElement.classList.remove("is-menu-open");
+        menuActions.current = { open: () => {}, close: () => {} };
         if (tick) gsap.ticker.remove(tick);
         lenis?.destroy();
       };
@@ -289,7 +705,7 @@ export function Portfolio() {
       const preview = previewRef.current;
       const frame = frameRef.current;
       const image = imageRef.current;
-      const list = root.current?.querySelector(".work-list");
+      const list = root.current?.querySelector<HTMLElement>(".work-list");
       if (!preview || !frame || !image || !list) return;
 
       const mm = gsap.matchMedia();
@@ -445,54 +861,44 @@ export function Portfolio() {
         Skip to work
       </a>
       <WebGLField />
-      <div className="page">
+      <div className="page" inert={menuOpen}>
         <header className="header">
           <div className="header-inner gutter">
-            <a className="brand" href="#top">
-              {site.name}
-            </a>
-            <div className="header-actions">
-              <nav className="nav" aria-label="Sections">
-                <a href="#work">Work</a>
-                <a href="#contact">Contact</a>
-              </nav>
-              <fieldset
-                ref={toggleRef}
-                className="toggle"
-                onPointerDown={(event) => {
-                  pointer.current = { x: event.clientX, y: event.clientY };
-                }}
-                onClick={(event) => {
-                  const label = (event.target as HTMLElement).closest("label");
-                  if (!label) return;
-                  const next: Mode = label.htmlFor === "mode-dev" ? "dev" : "design";
-                  if (!pointer.current) {
-                    pointer.current = { x: event.clientX, y: event.clientY };
-                  }
-                  choose(next);
-                }}
+            <div className="header-start">
+              <button
+                className="menu-toggle uline"
+                type="button"
+                aria-expanded={menuOpen}
+                aria-controls="site-menu"
+                onClick={() => menuActions.current.open()}
               >
-                <legend className="sr-only">Interface</legend>
-                <span className="toggle-thumb" aria-hidden="true" />
-                <input
-                  id="mode-dev"
-                  type="radio"
-                  name="mode"
-                  value="dev"
-                  checked={mode === "dev"}
-                  onChange={() => choose("dev")}
+                Menu
+              </button>
+              <div className="brand-clip">
+                <a className="brand" href="#top">
+                  {site.name}
+                </a>
+              </div>
+            </div>
+            <nav className="nav" aria-label="Sections">
+              {sections.map((section) => (
+                <span className="nav-clip" key={section.href}>
+                  <a href={section.href}>{section.label}</a>
+                </span>
+              ))}
+            </nav>
+            <div className="header-end">
+              <div className="toggle-clip">
+                <ModeToggle
+                  mode={mode}
+                  idPrefix="mode"
+                  fieldRef={toggleRef}
+                  onPointer={(point) => {
+                    pointer.current = point;
+                  }}
+                  onChoose={choose}
                 />
-                <label htmlFor="mode-dev">Development</label>
-                <input
-                  id="mode-design"
-                  type="radio"
-                  name="mode"
-                  value="design"
-                  checked={mode === "design"}
-                  onChange={() => choose("design")}
-                />
-                <label htmlFor="mode-design">Design</label>
-              </fieldset>
+              </div>
             </div>
           </div>
         </header>
@@ -625,7 +1031,13 @@ export function Portfolio() {
             </div>
           </section>
 
-          <section className="contact gutter" id="contact" aria-labelledby="contact-title">
+          <section
+            ref={contactRef}
+            className="contact gutter"
+            id="contact"
+            aria-labelledby="contact-title"
+          >
+            <canvas className="contact-trail" ref={contactTrailRef} aria-hidden="true" />
             <div className="contact-copy">
               <p className="eyebrow">Contact</p>
               <h2 id="contact-title">Let's talk.</h2>
@@ -649,6 +1061,78 @@ export function Portfolio() {
           </footer>
         </main>
       </div>
+
+      <aside
+        ref={overlayRef}
+        className="menu-overlay"
+        id="site-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-hidden={!menuOpen}
+        aria-label="Menu"
+        inert={!menuOpen}
+        data-lenis-prevent
+      >
+        <div className="menu-sheet" ref={sheetRef}>
+          <div className="menu-bar gutter">
+            <a
+              className="brand"
+              href="#top"
+              onClick={(event) => {
+                event.preventDefault();
+                menuActions.current.close("#top");
+              }}
+            >
+              {site.name}
+            </a>
+            <button className="menu-close uline" type="button" onClick={() => menuActions.current.close()}>
+              Close
+            </button>
+          </div>
+          <p className="sr-only">Section links. Scroll or use the arrow keys to move through them.</p>
+          <div className="menu-viewport">
+          <nav
+            className="menu-track"
+            ref={trackRef}
+            aria-label="Sections"
+            onClick={(event) => {
+              if (menuDrag.current) {
+                menuDrag.current = false;
+                event.preventDefault();
+                return;
+              }
+              const link = (event.target as HTMLElement).closest("a");
+              if (!link) return;
+              event.preventDefault();
+              menuActions.current.close(link.getAttribute("href"));
+            }}
+          >
+            {[0, 1].map((copy) => (
+              <ul key={copy} aria-hidden={copy === 1}>
+                {menuHalf.map((section, index) => (
+                  <li className="menu-row" key={`${copy}-${section.href}-${index}`}>
+                    <a href={section.href} tabIndex={copy === 1 ? -1 : undefined}>
+                      <span className="menu-index">({section.index})</span>
+                      <span>{section.label}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ))}
+          </nav>
+          </div>
+          <div className="menu-foot gutter">
+            <ModeToggle
+              mode={mode}
+              idPrefix="menu-mode"
+              onPointer={(point) => {
+                pointer.current = point;
+              }}
+              onChoose={choose}
+            />
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }

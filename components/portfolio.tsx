@@ -463,25 +463,6 @@ export function Portfolio() {
         menuCurrent += (menuTarget - menuCurrent) * ease;
         if (Math.abs(menuTarget - menuCurrent) < 0.2) menuCurrent = menuTarget;
         ySet(-gsap.utils.wrap(0, menuMax, menuCurrent - motion.offset));
-        const mid = window.innerHeight * 0.5;
-        const rows = [...menuTrack.querySelectorAll<HTMLElement>(".menu-row")];
-        let nearest: HTMLElement | null = null;
-        let nearestDist = Infinity;
-        const measured = rows.map((row) => {
-          const box = row.getBoundingClientRect();
-          const dist = Math.abs(box.top + box.height * 0.5 - mid);
-          if (dist < nearestDist) {
-            nearestDist = dist;
-            nearest = row;
-          }
-          return { row, dist, height: box.height };
-        });
-        measured.forEach(({ row, dist, height }) => {
-          const steps = dist / Math.max(height, 1);
-          const focused = row === nearest || row.matches(":hover");
-          const opacity = focused ? 1 : Math.max(0.16, 1 - steps * 0.62);
-          row.style.opacity = opacity.toFixed(3);
-        });
       };
 
       const onMenuWheel = (event: WheelEvent) => {

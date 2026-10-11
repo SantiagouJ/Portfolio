@@ -1011,7 +1011,21 @@ html.is-menu-open body {
   display: flex;
   align-items: center;
   height: 26vh;
-  opacity: 0.22;
+  opacity: 0.32;
+  transition: opacity 0.22s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .menu-row:hover,
+  .menu-row:focus-within {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-row {
+    transition: none;
+  }
 }
 
 .menu-row a {

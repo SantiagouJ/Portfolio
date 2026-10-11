@@ -6,6 +6,7 @@ export type Project = {
   year: string;
   meta: string;
   detail: string;
+  stack: string;
   image: string;
   visit: string;
 };
@@ -52,6 +53,7 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "Bookings in three steps, with nothing hidden in a menu",
       detail:
         "The booking path stays on one surface. Date, party size, and the table are the only decisions, in that order. Confirmation is the last screen, not a step buried in a menu.",
+      stack: "Figma, prototype, design system",
       image: "/work/table.svg",
       visit: "#",
     },
@@ -62,6 +64,7 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "System status, readable at a glance",
       detail:
         "Status is one reading, not a dashboard. The state that matters sits first. Everything else waits until someone asks for it.",
+      stack: "Figma, interface, design system",
       image: "/work/signal.svg",
       visit: "#",
     },
@@ -72,6 +75,7 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "Long forms, split into decisions",
       detail:
         "A long form becomes a sequence of small choices. Each step shows one decision, why it matters, and a way back without losing what was already answered.",
+      stack: "Figma, prototype, content design",
       image: "/work/field.svg",
       visit: "#",
     },
@@ -82,6 +86,7 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "From the data flow to the interface",
       detail:
         "The interface follows the record. Screens are grouped by how the data moves, from entry to review, so the layout matches the work instead of a menu.",
+      stack: "Figma, information architecture, interface",
       image: "/work/north.svg",
       visit: "#",
     },
@@ -94,6 +99,7 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "Next.js / TypeScript / Postgres",
       detail:
         "A booking service from the page to the database. Next.js draws the interface, TypeScript holds the contracts, and Postgres stores every reservation.",
+      stack: "Next.js, TypeScript, Postgres",
       image: "/work/relay.svg",
       visit: "#",
     },
@@ -104,6 +110,7 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "React / Node / WebSockets",
       detail:
         "Live updates over WebSockets. The client stays thin. The server owns the stream, the room, and what each connection is allowed to see.",
+      stack: "React, Node, WebSockets",
       image: "/work/channel.svg",
       visit: "#",
     },
@@ -114,6 +121,7 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "API / Auth / Panel",
       detail:
         "Sign-in, roles, and an admin panel on one API. Access is explicit. The panel only shows what the current session is allowed to touch.",
+      stack: "API, auth, admin panel",
       image: "/work/vault.svg",
       visit: "#",
     },
@@ -124,6 +132,7 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "TypeScript / REST / UI",
       detail:
         "A typed REST surface with a small interface on top. The routes follow the screens, so a change in the data shows up in the same place on the page.",
+      stack: "TypeScript, REST, interface",
       image: "/work/trace.svg",
       visit: "#",
     },

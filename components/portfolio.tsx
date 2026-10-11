@@ -95,6 +95,7 @@ export function Portfolio() {
     close: (_href?: string | null) => {},
   });
   const menuDrag = useRef(false);
+  const hidePreview = useRef<() => void>(() => {});
   const [mode, setMode] = useState<Mode>("design");
   const [openId, setOpenId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -728,6 +729,8 @@ export function Portfolio() {
           });
         };
 
+        hidePreview.current = hide;
+
         const show = (row: HTMLElement, event: PointerEvent) => {
           const src = row.dataset.image;
           if (!src) return;
@@ -815,6 +818,10 @@ export function Portfolio() {
             return;
           }
           arm(row, event.clientY);
+          if (row.closest(".work-item")?.classList.contains("is-open")) {
+            hide();
+            return;
+          }
           if (row !== current) show(row, event);
           else {
             xSet(event.clientX);
@@ -839,6 +846,7 @@ export function Portfolio() {
         window.addEventListener("dm-mode", onMode);
 
         return () => {
+          hidePreview.current = () => {};
           list.removeEventListener("pointermove", sync);
           list.removeEventListener("pointerleave", onLeave);
           window.removeEventListener("dm-mode", onMode);
@@ -981,7 +989,13 @@ export function Portfolio() {
                             data-image={project.image}
                             aria-expanded={open}
                             aria-controls={panelId}
-                            onClick={() => setOpenId((current) => (current === id ? null : id))}
+                            onClick={() => {
+                              setOpenId((current) => {
+                                const next = current === id ? null : id;
+                                if (next === id) hidePreview.current();
+                                return next;
+                              });
+                            }}
                           >
                             <span className="work-row-bg" aria-hidden="true" />
                             <span className="work-index">{project.index}</span>
@@ -1003,6 +1017,10 @@ export function Portfolio() {
                               <div className="work-detail">
                                 <div>
                                   <p className="work-copy">{project.detail}</p>
+                                  <p className="work-stack">
+                                    <span className="work-stack-label">Technologies</span>
+                                    {project.stack}
+                                  </p>
                                   <a
                                     className="work-visit"
                                     href={project.visit}

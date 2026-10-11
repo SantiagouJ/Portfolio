@@ -779,6 +779,24 @@ html[data-mode="design"] .work-row-bg {
   line-height: 1.25;
 }
 
+.work-stack {
+  margin: 1.15rem 0 0;
+  max-width: 36rem;
+  color: var(--muted);
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+  line-height: 1.45;
+}
+
+.work-stack-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .work-visit {
   display: inline-flex;
   margin-top: 1.35rem;

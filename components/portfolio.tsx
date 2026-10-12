@@ -329,13 +329,14 @@ export function Portfolio() {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const header = root.current?.querySelector(".header");
 
-      const lenis = reduce
-        ? null
-        : new Lenis({
-            lerp: 0.085,
-            smoothWheel: true,
-            syncTouch: false,
-          });
+      const lenis =
+        reduce || window.matchMedia("(pointer: coarse)").matches
+          ? null
+          : new Lenis({
+              lerp: 0.085,
+              smoothWheel: true,
+              syncTouch: false,
+            });
 
       const brand = header?.querySelector<HTMLElement>(".brand");
       const navLinks = header?.querySelectorAll<HTMLElement>(".nav a") ?? [];
@@ -654,16 +655,18 @@ export function Portfolio() {
           },
         });
 
-        gsap.to(".hero-title", {
-          yPercent: -10,
-          ease: "none",
-          scrollTrigger: {
-            trigger: ".hero",
-            start: "top top",
-            end: "bottom top",
-            scrub: true,
-          },
-        });
+        if (desktopQuery.matches && !window.matchMedia("(pointer: coarse)").matches) {
+          gsap.to(".hero-title", {
+            yPercent: -10,
+            ease: "none",
+            scrollTrigger: {
+              trigger: ".hero",
+              start: "top top",
+              end: "bottom top",
+              scrub: true,
+            },
+          });
+        }
       }
 
       const refresh = () => ScrollTrigger.refresh();

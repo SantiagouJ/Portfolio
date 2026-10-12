@@ -41,12 +41,9 @@ body {
   color: var(--fg);
 }
 
-html {
-  overflow-x: clip;
-}
-
 body {
   min-height: 100%;
+  overflow-x: clip;
   font-family: var(--font-instrument), sans-serif;
   font-weight: 400;
   text-rendering: optimizeLegibility;
@@ -526,6 +523,7 @@ html[data-mode="design"] .only-dev {
 
 .marquee {
   overflow: hidden;
+  touch-action: pan-y;
   border-block: 1px solid var(--line);
   padding-block: 0.95rem;
   color: var(--muted);
@@ -1155,6 +1153,14 @@ html[data-mode="design"] .menu-foot .toggle label[for="menu-mode-design"] {
 }
 
 @media (max-width: 759px) {
+  .header {
+    background: var(--bg);
+  }
+
+  .hero {
+    min-height: 100svh;
+  }
+
   .hero-title {
     font-size: clamp(3.15rem, 16.5vw, 6.2rem);
   }

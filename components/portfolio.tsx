@@ -62,7 +62,9 @@ function ModeToggle({
         checked={mode === "dev"}
         onChange={() => onChoose("dev")}
       />
-      <label htmlFor={`${idPrefix}-dev`}>Development</label>
+      <label htmlFor={`${idPrefix}-dev`}>
+        <span>Dev</span>
+      </label>
       <input
         id={`${idPrefix}-design`}
         type="radio"
@@ -71,7 +73,9 @@ function ModeToggle({
         checked={mode === "design"}
         onChange={() => onChoose("design")}
       />
-      <label htmlFor={`${idPrefix}-design`}>Design</label>
+      <label htmlFor={`${idPrefix}-design`}>
+        <span>Design</span>
+      </label>
     </fieldset>
   );
 }
@@ -337,7 +341,7 @@ export function Portfolio() {
       const navLinks = header?.querySelectorAll<HTMLElement>(".nav a") ?? [];
       const toggleClip = header?.querySelector<HTMLElement>(".toggle-clip");
       const menuBtn = header?.querySelector<HTMLElement>(".menu-toggle");
-      const desktopQuery = window.matchMedia("(min-width: 1080px)");
+      const desktopQuery = window.matchMedia("(min-width: 760px)");
       let compact = false;
       let headTl: gsap.core.Timeline | null = null;
 

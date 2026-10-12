@@ -712,12 +712,12 @@ export function Portfolio() {
 
         hidePreview.current = hide;
 
-        const show = (row: HTMLElement, event: PointerEvent) => {
+        const show = (row: HTMLElement, x: number, y: number) => {
           const src = row.dataset.image;
           if (!src) return;
           if (image.getAttribute("src") !== src) image.src = src;
-          xSet(event.clientX);
-          ySet(event.clientY);
+          xSet(x);
+          ySet(y);
           if (row === current && open) return;
           current = row;
           if (open) return;
@@ -779,38 +779,60 @@ export function Portfolio() {
           hot = null;
         };
 
-        const sync = (event: PointerEvent) => {
-          const target = event.target;
+        const syncAt = (x: number, y: number, follow: boolean) => {
+          const target = document.elementFromPoint(x, y);
           if (!(target instanceof Element)) {
             hide();
-            disarm(event.clientY);
+            disarm(y);
             return;
           }
           const row = target.closest(".work-row");
           if (!(row instanceof HTMLElement)) {
             hide();
-            disarm(event.clientY);
+            disarm(y);
             return;
           }
           const set = row.closest(".work-set");
           if (!(set instanceof HTMLElement) || set.dataset.set !== document.documentElement.dataset.mode) {
             hide();
-            disarm(event.clientY);
+            disarm(y);
             return;
           }
-          arm(row, event.clientY);
+          arm(row, y);
           if (row.closest(".work-item")?.classList.contains("is-open")) {
             hide();
             return;
           }
-          if (row !== current) show(row, event);
-          else {
-            xSet(event.clientX);
-            ySet(event.clientY);
+          if (row !== current) show(row, x, y);
+          else if (follow) {
+            xSet(x);
+            ySet(y);
           }
         };
 
-        const onLeave = (event: PointerEvent) => {
+        let px = 0;
+        let py = 0;
+        let seen = false;
+        let scrollFrame = 0;
+
+        const onPointerMove = (event: PointerEvent) => {
+          seen = true;
+          px = event.clientX;
+          py = event.clientY;
+          syncAt(px, py, true);
+        };
+
+        const onScroll = () => {
+          if (!seen || scrollFrame) return;
+          scrollFrame = window.requestAnimationFrame(() => {
+            scrollFrame = 0;
+            syncAt(px, py, false);
+          });
+        };
+
+        const onLeaveWindow = (event: PointerEvent) => {
+          if (event.relatedTarget instanceof Node) return;
+          seen = false;
           hide();
           disarm(event.clientY);
         };
@@ -822,15 +844,18 @@ export function Portfolio() {
           resetBars();
         };
 
-        list.addEventListener("pointermove", sync);
-        list.addEventListener("pointerleave", onLeave);
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("scroll", onScroll, { passive: true });
+        document.addEventListener("pointerout", onLeaveWindow);
         window.addEventListener("dm-mode", onMode);
 
         return () => {
           hidePreview.current = () => {};
-          list.removeEventListener("pointermove", sync);
-          list.removeEventListener("pointerleave", onLeave);
+          window.removeEventListener("pointermove", onPointerMove);
+          window.removeEventListener("scroll", onScroll);
+          document.removeEventListener("pointerout", onLeaveWindow);
           window.removeEventListener("dm-mode", onMode);
+          if (scrollFrame) window.cancelAnimationFrame(scrollFrame);
         };
       });
 
@@ -1005,6 +1030,9 @@ export function Portfolio() {
                                   <a
                                     className="work-visit"
                                     href={project.visit}
+                                    {...(project.visit.startsWith("http")
+                                      ? { target: "_blank", rel: "noreferrer" }
+                                      : {})}
                                     onClick={(event) => {
                                       if (project.visit === "#") event.preventDefault();
                                     }}

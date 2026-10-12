@@ -574,7 +574,7 @@ html[data-mode="design"] .work-set[data-set="dev"] {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 8;
+  z-index: 12;
   width: 0;
   height: 0;
   pointer-events: none;
@@ -693,51 +693,39 @@ html[data-mode="design"] .work-set[data-set="dev"] {
   transition: color 0.5s var(--ease);
 }
 
-@media (hover: hover) {
-  html[data-mode="dev"] .work-row:hover,
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
   html[data-mode="dev"] .work-row.is-hot {
     color: #161616;
   }
 
-  html[data-mode="design"] .work-row:hover,
   html[data-mode="design"] .work-row.is-hot {
     color: #f1f0eb;
   }
 
-  html[data-mode="dev"] .work-row:hover .work-index,
-  html[data-mode="dev"] .work-row:hover .work-year,
-  html[data-mode="dev"] .work-row:hover .work-meta,
   html[data-mode="dev"] .work-row.is-hot .work-index,
   html[data-mode="dev"] .work-row.is-hot .work-year,
   html[data-mode="dev"] .work-row.is-hot .work-meta {
     color: rgba(22, 22, 22, 0.62);
   }
 
-  html[data-mode="design"] .work-row:hover .work-index,
-  html[data-mode="design"] .work-row:hover .work-year,
-  html[data-mode="design"] .work-row:hover .work-meta,
   html[data-mode="design"] .work-row.is-hot .work-index,
   html[data-mode="design"] .work-row.is-hot .work-year,
   html[data-mode="design"] .work-row.is-hot .work-meta {
     color: rgba(241, 240, 235, 0.68);
   }
 
-  .work-row:hover .work-title,
   .work-row.is-hot .work-title {
     padding-left: 1.15rem;
   }
 
-  html[data-mode="dev"] .work-row:hover .work-title,
   html[data-mode="dev"] .work-row.is-hot .work-title {
     color: #161616;
   }
 
-  html[data-mode="design"] .work-row:hover .work-title,
   html[data-mode="design"] .work-row.is-hot .work-title {
     color: #f1f0eb;
   }
 
-  .work-row:hover .work-year,
   .work-row.is-hot .work-year {
     padding-right: 1.15rem;
   }
@@ -816,21 +804,27 @@ html[data-mode="design"] .work-row-bg {
   border-radius: 4px;
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
   .work-row-bg {
     display: none;
   }
 
-  html[data-mode="dev"] .work-row:hover,
-  html[data-mode="dev"] .work-row.is-hot {
+  html[data-mode="dev"] .work-row:hover {
     background: #fff;
     color: #161616;
   }
 
-  html[data-mode="design"] .work-row:hover,
-  html[data-mode="design"] .work-row.is-hot {
+  html[data-mode="design"] .work-row:hover {
     background: #161616;
     color: #f1f0eb;
+  }
+
+  .work-row:hover .work-title {
+    padding-left: 1.15rem;
+  }
+
+  .work-row:hover .work-year {
+    padding-right: 1.15rem;
   }
 }
 

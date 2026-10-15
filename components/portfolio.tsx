@@ -1030,22 +1030,18 @@ export function Portfolio() {
                               <div className="work-detail">
                                 <div>
                                   <p className="work-copy">{project.detail}</p>
-                                  <p className="work-stack">
-                                    <span className="work-stack-label">Technologies</span>
-                                    {project.stack}
-                                  </p>
-                                  <a
-                                    className="work-visit"
-                                    href={project.visit}
-                                    {...(project.visit.startsWith("http")
-                                      ? { target: "_blank", rel: "noreferrer" }
-                                      : {})}
-                                    onClick={(event) => {
-                                      if (project.visit === "#") event.preventDefault();
-                                    }}
-                                  >
-                                    Visit
-                                  </a>
+                                  {project.visit ? (
+                                    <a
+                                      className="work-visit"
+                                      href={project.visit}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                    >
+                                      Visit
+                                    </a>
+                                  ) : (
+                                    <p className="work-soon">Coming soon</p>
+                                  )}
                                 </div>
                                 <img className="work-shot" src={project.image} alt="" />
                               </div>

@@ -6,9 +6,8 @@ export type Project = {
   year: string;
   meta: string;
   detail: string;
-  stack: string;
   image: string;
-  visit: string;
+  visit: string | null;
 };
 
 export const site = {
@@ -53,7 +52,6 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "Space is free. The resources to rest are not.",
       detail:
         "Boreal redesigns the flow of a shared place so access to rest stays fair, even when the room is already full.",
-      stack: "UI/UX, case study",
       image: "/work/boreal.png",
       visit: "https://www.behance.net/gallery/250621707/Boreal-UI-UX-Case-study",
     },
@@ -64,7 +62,6 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "Independence for older adults, with family still close",
       detail:
         "hema is a care system that shortens the distance between generations, through smart care and a quieter interface.",
-      stack: "UI/UX, case study",
       image: "/work/hema.png",
       visit: "https://www.behance.net/gallery/248468629/hema-UI-UX-Case-Study",
     },
@@ -75,7 +72,6 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "What is in the kitchen, before it goes to waste",
       detail:
         "Kooli tracks food at home, expiration dates, and the next shop, so a busy kitchen stays readable.",
-      stack: "UI/UX, research",
       image: "/work/kooli.png",
       visit: "https://www.behance.net/gallery/239461841/Kooli-UI-UX-Research",
     },
@@ -83,9 +79,9 @@ export const work: Record<Mode, readonly Project[]> = {
       index: "04",
       title: "Moodj",
       year: "2025",
-      meta: "Interface and front-end",
-      detail: "Interface and front-end for Moodj.",
-      stack: "UI, front-end",
+      meta: "A song, posted with the mood you are in",
+      detail:
+        "Moodj is a social network where a song you like goes up with a mood, an emoji or a face, that says how you feel.",
       image: "/work/moodj.png",
       visit: "https://www.behance.net/gallery/236562013/Moodj-UIFront-end",
     },
@@ -93,9 +89,9 @@ export const work: Record<Mode, readonly Project[]> = {
       index: "05",
       title: "Titi!",
       year: "2025",
-      meta: "Interface and front-end",
-      detail: "Interface and front-end for Titi!.",
-      stack: "UI, front-end",
+      meta: "A screen to watch, a phone as the controller",
+      detail:
+        "Titi! is an interactive game played in real time over WebSockets, on two devices: a screen, and a phone that becomes the controller.",
       image: "/work/titi.png",
       visit: "https://www.behance.net/gallery/234180851/Titi-UIFront-end",
     },
@@ -103,9 +99,9 @@ export const work: Record<Mode, readonly Project[]> = {
       index: "06",
       title: "BUDDYUP",
       year: "2025",
-      meta: "UI and UX",
-      detail: "UI and UX for BUDDYUP.",
-      stack: "UI, UX",
+      meta: "Exercise, shared challenges, and time to study",
+      detail:
+        "BuddyUp is an exercise platform with gamification built in. People take on challenges together, and a Pomodoro section keeps study in the same place.",
       image: "/work/buddyup.jpg",
       visit: "https://www.behance.net/gallery/207274865/BUDDYUP-UI-UX",
     },
@@ -116,7 +112,6 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "Bulletins, alerts, and grades in one place",
       detail:
         "Clip gathers reports, early alerts, and student achievements for Camino a la U, built with Fanalca, Metalsur, and Jóvenes con Propósito.",
-      stack: "UI/UX, case study",
       image: "/work/clip.png",
       visit: "https://www.behance.net/gallery/239336329/Clip-UI-UX-Case-Study",
     },
@@ -127,7 +122,6 @@ export const work: Record<Mode, readonly Project[]> = {
       meta: "Cultural events, attended in groups",
       detail:
         "Museums and cultural spaces publish their own events. People show up together, in groups they create.",
-      stack: "UI/UX",
       image: "/work/vibra.png",
       visit: "https://www.behance.net/gallery/234835725/Vibra-v",
     }
@@ -135,47 +129,53 @@ export const work: Record<Mode, readonly Project[]> = {
   dev: [
     {
       index: "01",
-      title: "Relay",
+      title: "NestJS Study",
       year: "2026",
-      meta: "Next.js / TypeScript / Postgres",
+      meta: "Next.js / TypeScript / Monaco / WebContainers",
       detail:
-        "A booking service from the page to the database. Next.js draws the interface, TypeScript holds the contracts, and Postgres stores every reservation.",
-      stack: "Next.js, TypeScript, Postgres",
-      image: "/work/relay.svg",
-      visit: "#",
+        "A platform in the browser for learning NestJS and TypeORM, from the first module through a working API.",
+      image: "/work/nestjs-study.png",
+      visit: "https://nestjs-study.vercel.app",
     },
     {
       index: "02",
-      title: "Channel",
-      year: "2025",
-      meta: "React / Node / WebSockets",
+      title: "Buzzer Bite",
+      year: "2026",
+      meta: "NestJS / TypeScript / TypeORM / Postgres",
       detail:
-        "Live updates over WebSockets. The client stays thin. The server owns the stream, the room, and what each connection is allowed to see.",
-      stack: "React, Node, WebSockets",
-      image: "/work/channel.svg",
-      visit: "#",
+        "Buzzer Bite is for local bakeries, cafés, and restaurants that finish the day with food still good to eat. They pack the surplus into surprise or fixed packs, at a discount, and publish a strict pickup window. People nearby reserve one and collect it in the shop with a QR code.",
+      image: "/work/relay.svg",
+      visit: null,
     },
     {
       index: "03",
-      title: "Vault",
+      title: "Moodj",
       year: "2025",
-      meta: "API / Auth / Panel",
+      meta: "TypeScript / Firebase / Webpack / Deezer API",
       detail:
-        "Sign-in, roles, and an admin panel on one API. Access is explicit. The panel only shows what the current session is allowed to touch.",
-      stack: "API, auth, admin panel",
-      image: "/work/vault.svg",
-      visit: "#",
+        "Moodj is a social network where a song you like goes up with a mood, an emoji or a face, that says how you feel.",
+      image: "/work/moodj.png",
+      visit: "https://moodjsocial.netlify.app/",
     },
     {
       index: "04",
-      title: "Trace",
-      year: "2024",
-      meta: "TypeScript / REST / UI",
+      title: "CR7",
+      year: "2026",
+      meta: "React / TypeScript / GSAP / Vite",
       detail:
-        "A typed REST surface with a small interface on top. The routes follow the screens, so a change in the data shows up in the same place on the page.",
-      stack: "TypeScript, REST, interface",
-      image: "/work/trace.svg",
-      visit: "#",
+        "A cinematic site for Cristiano Ronaldo's path from Sporting CP to Al-Nassr, built with React, GSAP, and scroll-driven motion.",
+      image: "/work/cr7.jpg",
+      visit: "https://cr-7-1f3n.vercel.app",
+    },
+    {
+      index: "05",
+      title: "Skema Reality",
+      year: "2026",
+      meta: "Next.js / TypeScript / Three.js",
+      detail:
+        "Skema Reality adds a 3D view to the Skema site. In the browser, people walk through a project and edit the finishes. In the sales room, a headset lets them walk the model apartment and change those finishes there too.",
+      image: "/work/field.svg",
+      visit: null,
     },
   ],
 };

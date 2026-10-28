@@ -17,9 +17,24 @@ const mono = IBM_Plex_Mono({
   display: "swap",
 });
 
+const description = "Portfolio of Santiago Jurado, full-stack developer and UX/UI.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.santiagojurador.com"),
   title: "Santiago Jurado",
-  description: "Portfolio of Santiago Jurado, full-stack developer and UX/UI.",
+  description,
+  openGraph: {
+    title: "Santiago Jurado",
+    description,
+    url: "https://www.santiagojurador.com",
+    siteName: "Santiago Jurado",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Santiago Jurado",
+    description,
+  },
 };
 
 export const viewport: Viewport = {

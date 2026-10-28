@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Santiago Jurado — LinkedIn banner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #121210;
+      --fg: #f1f0eb;
+      --banner-w: 1584px;
+      --banner-h: 396px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      gap: 24px;
+      padding: 32px 16px 48px;
+      background: #2a2a28;
+      color: var(--fg);
+      font-family: "Instrument Sans", sans-serif;
+    }
+
+    .stage {
+      width: min(100%, var(--banner-w));
+    }
+
+    .banner {
+      position: relative;
+      width: var(--banner-w);
+      height: var(--banner-h);
+      background: #121210;
+      overflow: hidden;
+      transform-origin: top left;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .name {
+      position: absolute;
+      right: 72px;
+      top: 50%;
+      transform: translateY(-50%);
+      margin: 0;
+      font-weight: 500;
+      font-size: 76px;
+      letter-spacing: -0.045em;
+      line-height: 0.92;
+      text-align: right;
+      color: #f1f0eb;
+      white-space: nowrap;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      width: min(100%, var(--banner-w));
+    }
+
+    button {
+      font: inherit;
+      font-size: 14px;
+      color: var(--bg);
+      background: var(--fg);
+      border: 0;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="banner" id="banner">
+      <canvas id="trail" width="1584" height="396"></canvas>
+      <h1 class="name">Santiago<br />Jurado</h1>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button type="button" id="download">Descargar PNG</button>
+    <p>1584 × 396 · no forma parte del sitio</p>
+  </div>
+  <script>
+    const SIZE = 56;
+    const canvas = document.getElementById("trail");
+    const ctx = canvas.getContext("2d");
+
+    function paint() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#121210";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const tones = ["#f1f0eb", "#c8c6be", "#8d8b84", "#5c5b56"];
+      const cols = Math.ceil(1080 / SIZE);
+      const rows = Math.ceil(canvas.height / SIZE);
+      let seed = 42;
+      const rand = () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+      const on = Array.from({ length: rows }, () => Array(cols).fill(false));
+
+      for (let row = 0; row < rows; row += 1) {
+        for (let col = 0; col < cols; col += 1) {
+          const neighbor =
+            (row > 0 && on[row - 1][col]) ||
+            (col > 0 && on[row][col - 1]);
+          on[row][col] = neighbor ? rand() < 0.72 : rand() < 0.16;
+        }
+      }
+
+      for (let row = 0; row < rows; row += 1) {
+        for (let col = 0; col < cols; col += 1) {
+          if (!on[row][col]) continue;
+          ctx.globalAlpha = 0.45 + rand() * 0.55;
+          ctx.fillStyle = tones[Math.floor(rand() * tones.length)];
+          ctx.fillRect(col * SIZE, row * SIZE, SIZE, SIZE);
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    function fit() {
+      const banner = document.getElementById("banner");
+      const scale = Math.min(1, (document.querySelector(".stage").clientWidth) / 1584);
+      banner.style.transform = `scale(${scale})`;
+      banner.parentElement.style.height = `${396 * scale}px`;
+    }
+
+    paint();
+    fit();
+    window.addEventListener("resize", fit);
+
+    document.getElementById("download").addEventListener("click", async () => {
+      const banner = document.getElementById("banner");
+      const blob = await new Promise((resolve) => {
+        const out = document.createElement("canvas");
+        out.width = 1584;
+        out.height = 396;
+        const octx = out.getContext("2d");
+        octx.drawImage(canvas, 0, 0);
+        octx.fillStyle = "#f1f0eb";
+        octx.font = "500 76px Instrument Sans, sans-serif";
+        octx.textAlign = "right";
+        octx.textBaseline = "middle";
+        octx.fillText("Santiago", 1584 - 72, 396 / 2 - 40);
+        octx.fillText("Jurado", 1584 - 72, 396 / 2 + 40);
+        out.toBlob(resolve, "image/png");
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "santiago-jurado-linkedin.png";
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

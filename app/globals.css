@@ -393,12 +393,32 @@ html[data-mode="design"] .toggle-thumb {
 }
 
 .hero {
+  position: relative;
+  isolation: isolate;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding-top: calc(var(--header) + 2rem);
   padding-bottom: 4.5rem;
+}
+
+.ascii-sharks {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* The engine paints this colour as its backdrop. */
+  background: #121210;
+  font-family: var(--font-plex), ui-monospace, monospace;
+  pointer-events: none;
+}
+
+/* The ocean is drawn for a dark backdrop; inverting it gives the light version. */
+html[data-mode="design"] .ascii-sharks {
+  filter: invert(1) hue-rotate(180deg);
 }
 
 .hero-title {
@@ -780,24 +800,6 @@ html[data-mode="design"] .work-row-bg {
   line-height: 1.25;
 }
 
-.work-stack {
-  margin: 1.15rem 0 0;
-  max-width: 36rem;
-  color: var(--muted);
-  font-size: 1rem;
-  letter-spacing: -0.02em;
-  line-height: 1.45;
-}
-
-.work-stack-label {
-  display: block;
-  margin-bottom: 0.35rem;
-  font-family: var(--font-plex), ui-monospace, monospace;
-  font-size: 0.66rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
 .work-visit {
   display: inline-flex;
   margin-top: 1.35rem;
@@ -807,6 +809,15 @@ html[data-mode="design"] .work-row-bg {
   color: var(--bg);
   font-size: 0.92rem;
   letter-spacing: -0.02em;
+}
+
+.work-soon {
+  margin: 1.55rem 0 0;
+  color: var(--muted);
+  font-family: var(--font-plex), ui-monospace, monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .work-shot {

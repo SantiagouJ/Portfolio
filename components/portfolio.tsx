@@ -11,6 +11,7 @@ import "lenis/dist/lenis.css";
 import { marquee, sections, site, work, type Mode } from "@/lib/content";
 import { runtime } from "@/lib/runtime";
 import { PixelReveal } from "@/components/pixel-reveal";
+import { AsciiSharks } from "@/components/ascii-sharks";
 
 const WebGLField = dynamic(
   () => import("@/components/webgl-field").then((mod) => mod.WebGLField),
@@ -926,6 +927,7 @@ export function Portfolio() {
 
         <main id="top">
           <section className="hero gutter" aria-labelledby="name">
+            <AsciiSharks />
             <h1 className="hero-title" id="name">
               <span className="line">
                 <span className="line-inner">{firstName}</span>
